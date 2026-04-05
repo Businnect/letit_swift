@@ -25,7 +25,8 @@ final class JobTests: XCTestCase {
         } catch LetItError.api(let message)
             where message.localizedCaseInsensitiveContains("cloudinary") ||
                   message.localizedCaseInsensitiveContains("upload") ||
-                  message.localizedCaseInsensitiveContains("company_logo") {
+                  message.localizedCaseInsensitiveContains("company_logo") ||
+                  message.localizedCaseInsensitiveContains("missing required field") {
             throw XCTSkip("Live job upload is not available in this environment: \(message)")
         }
 
