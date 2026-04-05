@@ -1,0 +1,40 @@
+name: Publish Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.9"
+
+      - name: Build
+        run: swift build -v
+
+      - name: Test
+        run: swift test -v
+
+      - name: Create source archive
+        run: |
+          tar --exclude='.git' -czf letit_swift-source.tgz .
+
+      - name: Upload release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: letit_swift-source.tgz
