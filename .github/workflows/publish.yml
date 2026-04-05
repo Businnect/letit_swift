@@ -28,6 +28,8 @@ jobs:
 
       - name: Test
         run: swift test -v
+        env:
+          LETIT_API_TOKEN: ${{ secrets.LETIT_API_TOKEN }}
 
       - name: Create source archive
         run: |
