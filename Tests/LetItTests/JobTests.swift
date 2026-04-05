@@ -6,16 +6,16 @@ final class JobTests: XCTestCase {
     func testCreateAndDeleteJob() async throws {
         let client = try LiveTestConfig.makeClient()
         let id = UUID().uuidString.lowercased().replacingOccurrences(of: "-", with: "")
-        let logoBytes = try? loadLogoBytes()
+        let logoBytes = try loadLogoBytes()
 
-        var request = CreateJobWithCompanyRequest(
+        let request = CreateJobWithCompanyRequest(
             companyName: "Acme \(id.prefix(8))",
             companyDescription: "Remote-first company.",
             companyWebsite: "https://example.com",
             jobTitle: "Senior Swift Developer \(id.prefix(6))",
             jobDescription: "Build SDKs and APIs.",
             jobHowToApply: "https://example.com/apply",
-            companyLogo: logoBytes.map { FilePayload(filename: "logo.png", bytes: $0, mimeType: "image/png") },
+            companyLogo: FilePayload(filename: "logo.png", bytes: logoBytes, mimeType: "image/png"),
             jobLocation: .remote
         )
 
@@ -24,9 +24,9 @@ final class JobTests: XCTestCase {
             created = try await client.job.createWithCompany(request)
         } catch LetItError.api(let message)
             where message.localizedCaseInsensitiveContains("cloudinary") ||
-                  message.localizedCaseInsensitiveContains("upload") {
-            request.companyLogo = nil
-            created = try await client.job.createWithCompany(request)
+                  message.localizedCaseInsensitiveContains("upload") ||
+                  message.localizedCaseInsensitiveContains("company_logo") {
+            throw XCTSkip("Live job upload is not available in this environment: \(message)")
         }
 
         XCTAssertFalse(created.slug.isEmpty)
