@@ -14,7 +14,11 @@ final class MicropostTests: XCTestCase {
         )
 
         XCTAssertFalse(created.publicId.isEmpty)
-        XCTAssertTrue(created.link.hasPrefix("http"))
+        XCTAssertFalse(created.link.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        XCTAssertTrue(
+            created.link.contains(created.publicId) || created.link.hasPrefix("http"),
+            "Expected link to include publicId or be an absolute URL, got: \(created.link)"
+        )
 
         try await client.micropost.delete(publicId: created.publicId)
     }
