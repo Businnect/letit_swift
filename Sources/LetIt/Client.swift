@@ -65,7 +65,7 @@ extension LetIt.Client {
         decodeAs type: T.Type
     ) async throws -> T {
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await requestData(request, session: session)
             try validate(response: response, data: data, decoder: decoder)
 
             do {
@@ -86,12 +86,35 @@ extension LetIt.Client {
         decoder: JSONDecoder
     ) async throws {
         do {
-            let (data, response) = try await session.data(for: request)
+            let (data, response) = try await requestData(request, session: session)
             try validate(response: response, data: data, decoder: decoder)
         } catch let error as LetItError {
             throw error
         } catch {
             throw LetItError.transport(error)
+        }
+    }
+
+    private static func requestData(
+        _ request: URLRequest,
+        session: URLSession
+    ) async throws -> (Data, URLResponse) {
+        try await withCheckedThrowingContinuation { continuation in
+            let task = session.dataTask(with: request) { data, response, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+
+                guard let response else {
+                    continuation.resume(throwing: LetItError.api("invalid response"))
+                    return
+                }
+
+                continuation.resume(returning: (data ?? Data(), response))
+            }
+
+            task.resume()
         }
     }
 
